@@ -12,6 +12,7 @@ var fromAddress = 'put sender  address';
 var toAddress = 'put receiver address';
 var changeAddress = 'here also put sender  address';
 var privateKey = AddrUtils.bitcoin_address_to_zcoin('sender private key'); 
+var sendingAmount = 'put amount to send';
  
 var simpleUtxoWith100000Satoshis = {
     address: fromAddress,
@@ -23,7 +24,7 @@ var simpleUtxoWith100000Satoshis = {
 
 var tx = new Transaction()
       .from(simpleUtxoWith100000Satoshis)
-      .to([{address: toAddress, satoshis: 100000000}])
+      .to([{address: toAddress, satoshis: sendingAmount}])
       .fee(15000)
       .change(changeAddress)
       .sign(privateKey);
