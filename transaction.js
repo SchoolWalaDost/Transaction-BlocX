@@ -1,40 +1,64 @@
-'use strict';
+"use strict";
 
-var bitcore = require('.');
+const express = require("express");
+var bitcore = require(".");
 var PrivateKey = bitcore.PrivateKey;
 var Transaction = bitcore.Transaction;
 var Script = bitcore.Script;
 var AddrUtils = bitcore.util.AddrUtils;
 
+const app = express();
+const port = 3000;
 
+app.use(express.json());
 
-var fromAddress = 'put sender  address';
-var toAddress = 'put receiver address';
-var changeAddress = 'here also put sender  address';
-var privateKey = AddrUtils.bitcoin_address_to_zcoin('sender private key'); 
-var sendingAmount = 'put amount to send';
- 
-var simpleUtxoWith100000Satoshis = {
-    address: fromAddress,
-    txId: 'current sender address last txid',
-    outputIndex: 0,
-    script: Script.buildPublicKeyHashOut(fromAddress).toString(),
-    satoshis: 'current sender address blocx balance'
-  };
+app.post("/transaction", (req, res) => {
+  try {
+    const {
+      RAddress,
+      tAddress,
+      pKey,
+      sAmount, //INT
+      txid,
+      vout, //INT
+      TBalance //INT
+    } = req.body;
 
-var tx = new Transaction()
+    var fromAddress = RAddress;
+    var toAddress = tAddress;
+    var changeAddress = RAddress;
+    var privateKey = AddrUtils.bitcoin_address_to_zcoin(pKey);
+    var sendingAmount = sAmount;
+
+    var simpleUtxoWith100000Satoshis = {
+      address: fromAddress,
+      txId: txid,
+      outputIndex: vout,
+      script: Script.buildPublicKeyHashOut(fromAddress).toString(),
+      satoshis: TBalance,
+    };
+
+    var tx = new Transaction()
       .from(simpleUtxoWith100000Satoshis)
-      .to([{address: toAddress, satoshis: sendingAmount}])
-      .fee(15000)
+      .to([{ address: toAddress, satoshis: sendingAmount }])
+      .fee(1019)
       .change(changeAddress)
       .sign(privateKey);
 
+    var txData = JSON.stringify(tx, null, 2);
 
-      var txData = JSON.stringify(tx);
+    // console.log(tx);
+    console.log(txData);
 
-      console.log(tx);
-      console.log(txData)
+    var seraliseee = tx.serialize();
 
-      var seraliseee = tx.serialize();
-      
-      console.log(seraliseee);
+    console.log(seraliseee);
+    res.json({ success: true, seraliseee });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`API server is running on port ${port}`);
+});
