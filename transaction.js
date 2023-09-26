@@ -50,10 +50,10 @@ app.post("/transaction", (req, res) => {
     // console.log(tx);
     console.log(txData);
 
-    var seraliseee = tx.serialize();
+    var txHash = tx.serialize();
 
     console.log(seraliseee);
-    res.json({ success: true, seraliseee });
+    res.json({ success: true, txHash });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
