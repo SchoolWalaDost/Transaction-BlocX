@@ -52,7 +52,7 @@ app.post("/transaction", (req, res) => {
 
     var txHash = tx.serialize();
 
-    console.log(seraliseee);
+    // console.log(seraliseee);
     res.json({ success: true, txHash });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
