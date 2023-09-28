@@ -29,6 +29,7 @@ app.post("/transaction", (req, res) => {
     var changeAddress = RAddress;
     var privateKey = AddrUtils.bitcoin_address_to_zcoin(pKey);
     var sendingAmount = send;
+    console.log(sendingAmount);
 
     var simpleUtxoWith100000Satoshis = {
       address: fromAddress,
