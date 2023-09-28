@@ -23,13 +23,14 @@ app.post("/transaction", (req, res) => {
       vout, //INT
       TBalance //INT
     } = req.body;
-    var send = (sAmount*100000000).toString().split('.')[0];
+    // var send = (sAmount*100000000).toString().split('.')[0];
     var fromAddress = RAddress;
     var toAddress = tAddress;
     var changeAddress = RAddress;
     var privateKey = AddrUtils.bitcoin_address_to_zcoin(pKey);
-    var sendingAmount = parseInt(send);
-    console.log(sendingAmount +"============="+ typeof sendingAmount) ;
+    // var sendingAmount = parseInt(send);
+    var sendingAmount = sAmount;
+    // console.log(sendingAmount +"============="+ typeof sendingAmount) ;
 
     var simpleUtxoWith100000Satoshis = {
       address: fromAddress,
