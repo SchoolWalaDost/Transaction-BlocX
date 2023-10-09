@@ -1,11 +1,79 @@
+// "use strict";
+
+// const express = require("express");
+// var bitcore = require(".");
+// var PrivateKey = bitcore.PrivateKey;
+// var Transaction = bitcore.Transaction;
+// var Script = bitcore.Script;
+// var AddrUtils = bitcore.util.AddrUtils;
+
+// const app = express();
+// const port = 3000;
+
+// app.use(express.json());
+
+// app.post("/transaction", (req, res) => {
+//   try {
+//     const {
+//       RAddress,
+//       tAddress,
+//       pKey,
+//       sAmount, //INT
+//       txid,
+//       vout, //INT
+//       TBalance //INT
+//     } = req.body;
+//     var send = (sAmount*100000000).toString().split('.')[0];
+//     var fromAddress = RAddress;
+//     var toAddress = tAddress;
+//     var changeAddress = RAddress;
+//     var privateKey = AddrUtils.bitcoin_address_to_zcoin(pKey);
+//     var sendingAmount = parseInt(send);
+//     // var sendingAmount = sAmount;
+//     // console.log(sendingAmount +"============="+ typeof sendingAmount) ;
+
+//     var simpleUtxoWith100000Satoshis = {
+//       address: fromAddress,
+//       txId: txid,
+//       outputIndex: vout,
+//       script: Script.buildPublicKeyHashOut(fromAddress).toString(),
+//       satoshis: TBalance,
+//     };
+
+//     var tx = new Transaction()
+//       .from(simpleUtxoWith100000Satoshis)
+//       .to([{ address: toAddress, satoshis: sendingAmount }])
+//       .fee(1019)
+//       .change(changeAddress)
+//       .sign(privateKey);
+
+//     // var txData = JSON.stringify(tx, null, 2);
+
+//     // console.log(tx);
+//     // console.log(txData);
+
+//     var txHash = tx.serialize();
+
+//     // console.log(seraliseee);
+//     res.json({ success: true, txHash });
+//   } catch (error) {
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// });
+
+// app.listen(port, () => {
+//   console.log(`API server is running on port ${port}`);
+// });
+
+
 "use strict";
 
 const express = require("express");
-var bitcore = require(".");
-var PrivateKey = bitcore.PrivateKey;
-var Transaction = bitcore.Transaction;
-var Script = bitcore.Script;
-var AddrUtils = bitcore.util.AddrUtils;
+const bitcore = require(".");
+const PrivateKey = bitcore.PrivateKey;
+const Transaction = bitcore.Transaction;
+const Script = bitcore.Script;
+const AddrUtils = bitcore.util.AddrUtils;
 
 const app = express();
 const port = 3000;
@@ -18,44 +86,47 @@ app.post("/transaction", (req, res) => {
       RAddress,
       tAddress,
       pKey,
-      sAmount, //INT
+      sAmount,
       txid,
-      vout, //INT
-      TBalance //INT
+      vout,
+      TBalance
     } = req.body;
-    var send = (sAmount*100000000).toString().split('.')[0];
-    var fromAddress = RAddress;
-    var toAddress = tAddress;
-    var changeAddress = RAddress;
-    var privateKey = AddrUtils.bitcoin_address_to_zcoin(pKey);
-    var sendingAmount = parseInt(send);
-    // var sendingAmount = sAmount;
-    // console.log(sendingAmount +"============="+ typeof sendingAmount) ;
 
-    var simpleUtxoWith100000Satoshis = {
-      address: fromAddress,
-      txId: txid,
-      outputIndex: vout,
-      script: Script.buildPublicKeyHashOut(fromAddress).toString(),
-      satoshis: TBalance,
-    };
+    if (!Array.isArray(txid) || !Array.isArray(vout) || txid.length !== vout.length) {
+      throw new Error("txid and vout should be arrays of the same length.");
+    }
 
-    var tx = new Transaction()
-      .from(simpleUtxoWith100000Satoshis)
-      .to([{ address: toAddress, satoshis: sendingAmount }])
-      .fee(1019)
-      .change(changeAddress)
-      .sign(privateKey);
+    const transactions = [];
 
-    // var txData = JSON.stringify(tx, null, 2);
+    for (let i = 0; i < txid.length; i++) {
+      const send = (sAmount * 100000000).toString().split('.')[0];
+      const fromAddress = RAddress;
+      const toAddress = tAddress;
+      const changeAddress = RAddress;
+      const privateKey = AddrUtils.bitcoin_address_to_zcoin(pKey);
+      const sendingAmount = parseInt(send);
 
-    // console.log(tx);
-    // console.log(txData);
+      const simpleUtxoWith100000Satoshis = {
+        address: fromAddress,
+        txId: txid[i],
+        outputIndex: vout[i],
+        script: Script.buildPublicKeyHashOut(fromAddress).toString(),
+        satoshis: TBalance
+      };
 
-    var txHash = tx.serialize();
+      const tx = new Transaction()
+        .from(simpleUtxoWith100000Satoshis)
+        .to([{ address: toAddress, satoshis: sendingAmount }])
+        .fee(1019)
+        .change(changeAddress)
+        .sign(privateKey);
 
-    // console.log(seraliseee);
-    res.json({ success: true, txHash });
+      transactions.push(tx);
+    }
+
+    const serializedTransactions = transactions.map(tx => tx.serialize());
+
+    res.json({ success: true, txHashes: serializedTransactions });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -64,3 +135,4 @@ app.post("/transaction", (req, res) => {
 app.listen(port, () => {
   console.log(`API server is running on port ${port}`);
 });
+
