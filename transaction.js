@@ -89,44 +89,46 @@ app.post("/transaction", (req, res) => {
       sAmount,
       txid,
       vout,
-      TBalance
+      vinamount
     } = req.body;
 
     if (!Array.isArray(txid) || !Array.isArray(vout) || txid.length !== vout.length) {
       throw new Error("txid and vout should be arrays of the same length.");
     }
 
-    const transactions = [];
+    const send = (sAmount * 100000000).toString().split('.')[0];
+    const fromAddress = RAddress;
+    const toAddress = tAddress;
+    const changeAddress = RAddress;
+    const privateKey = AddrUtils.bitcoin_address_to_zcoin(pKey);
+    const sendingAmount = parseInt(send);
+
+    const tx = new Transaction();
+    let totalBalance = 0;
 
     for (let i = 0; i < txid.length; i++) {
-      const send = (sAmount * 100000000).toString().split('.')[0];
-      const fromAddress = RAddress;
-      const toAddress = tAddress;
-      const changeAddress = RAddress;
-      const privateKey = AddrUtils.bitcoin_address_to_zcoin(pKey);
-      const sendingAmount = parseInt(send);
-
-      const simpleUtxoWith100000Satoshis = {
+      tx.from({
         address: fromAddress,
         txId: txid[i],
-        outputIndex: vout[i],
+        outputIndex: parseInt(vout[i]),
         script: Script.buildPublicKeyHashOut(fromAddress).toString(),
-        satoshis: TBalance
-      };
-
-      const tx = new Transaction()
-        .from(simpleUtxoWith100000Satoshis)
-        .to([{ address: toAddress, satoshis: sendingAmount }])
-        .fee(1019)
-        .change(changeAddress)
-        .sign(privateKey);
-
-      transactions.push(tx);
+        satoshis: parseInt(vinamount[i])
+      });
+      totalBalance += parseInt(vinamount[i]);
     }
+    const fees = (192 + (148 * (txid.length - 1)) + (34 * 2)) * 10;
 
-    const serializedTransactions = transactions.map(tx => tx.serialize());
+    if ((totalBalance - fees) <= sendingAmount) return res.json({ success: false, error: "Insufficient balance" });
+    tx.to([{ address: toAddress, satoshis: sendingAmount }]).fee(fees);
 
-    res.json({ success: true, txHashes: serializedTransactions });
+    const remainBalance = totalBalance - sendingAmount - fees;
+    if (remainBalance > 100) tx.to([{ address: changeAddress, satoshis: remainBalance }]);
+
+    for (let i = 0; i < txid.length; i++) tx.sign(privateKey);
+
+    const hex = tx.toString()
+
+    return res.json({ success: true, txHashes: hex });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
